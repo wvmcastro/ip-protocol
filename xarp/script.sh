@@ -1,0 +1,12 @@
+./xarp add 192.169.12.11 aa:aa:aa:aa:aa:a1 10
+./xarp add 192.169.12.12 aa:aa:aa:aa:aa:a2 11
+./xarp add 192.169.12.13 aa:aa:aa:aa:aa:a3 12
+./xarp add 192.169.12.14 aa:aa:aa:aa:aa:a4 13
+./xarp add 192.169.12.15 aa:aa:aa:aa:aa:a5 14
+./xarp add 192.169.12.16 aa:aa:aa:aa:aa:a6 15
+./xarp add 192.169.12.17 aa:aa:aa:aa:aa:a7 15
+./xarp add 192.169.12.18 aa:aa:aa:aa:aa:a8 14
+./xarp add 192.169.12.19 aa:aa:aa:aa:aa:a9 13
+./xarp add 192.169.12.20 aa:aa:aa:aa:aa:aa 12
+./xarp add 192.169.12.21 aa:aa:aa:aa:aa:ab 11
+./xarp add 192.169.12.22 aa:aa:aa:aa:aa:ac 10
