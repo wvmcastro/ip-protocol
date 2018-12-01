@@ -8,7 +8,7 @@ void makeNewSocketAndConnect(int*, struct sockaddr_in*);
 
 void printInterface(MyInterface*);
 
-void listIfaces();
+void listIfaces(char*);
 
 void configIface(const char*, const char*, const char*);
 

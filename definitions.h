@@ -38,12 +38,15 @@
 // OPCODES
 #define SHOW_TABLE    0
 #define RES_IP        1
-#define ADD_LINE      2
-#define DEL_LINE      3
+#define ADD_ARP_LINE  2
+#define DEL_ARP_LINE  3
 #define SET_ARP_TTL   4
 #define LIST_IFCES    5
 #define CONFIG_IFACE  6
 #define SET_IFACE_MTU 7
+
+// new features implemented in ipd
+#define LIST_IFACE    8
 // -------- End inter program communication ----------
 
 #endif

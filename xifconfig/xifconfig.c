@@ -40,7 +40,7 @@ void printInterface(MyInterface *interface)
   printf("TX bytes: %lu\n", *(unsigned long*)tx);
 }
 
-void listIfaces()
+void listIfaces(char *ifaceName)
 {
   // Builds the essential to communicate with xarpd
   int socket;
@@ -48,14 +48,26 @@ void listIfaces()
   loadSocketInfo(&serv_addr, LOOPBACK_IP, XARPD_PORT);
   makeNewSocketAndConnect(&socket, (struct sockaddr_in*) &serv_addr);
 
-  char request = LIST_IFCES;
-  _send(socket, &request, 1);
-  close(socket);
+  if(ifaceName == NULL)
+  {
+    char request[2];
+    request[0] = 2;
+    request[1] = LIST_IFCES;
+    _send(socket, request, 2);
+  }
+  else
+  {
+    unsigned char requestLength = 1 + 1 + strlen(ifaceName) + 1;
+    char request[requestLength];
+    request[0] = requestLength;
+    request[1] = LIST_IFACE;
+    strcpy(request+2, ifaceName);
+    _send(socket, request, requestLength);
+  }
 
   int interfaceLength = sizeof(MyInterface);
   char *buffer = (char*) malloc(interfaceLength);
   int n = 0;
-  makeNewSocketAndConnect(&socket, (struct sockaddr_in*) &serv_addr);
   do
   {
     if(n == interfaceLength) n = 0; // clean n for next interation
@@ -81,12 +93,13 @@ void configIface(const char *ifaceName, const char *ipAddress, const char *netma
 
   // Prepares info to send
   // opcode ifacenName ipAddress netmask
-  unsigned char messageLen = 1 + ifaceNameLen+1 + 4 + 4;
+  unsigned char messageLen = 1 + 1 + ifaceNameLen+1 + 4 + 4;
   char message[messageLen];
-  message[0] = CONFIG_IFACE;
-  memcpy(message+1, ifaceName, ifaceNameLen+1);
-  memcpy(message+1+ifaceNameLen+1, (char*)&ip, 4);
-  memcpy(message+1+ifaceNameLen+1+4, (char*)&mask, 4);
+  message[0] = messageLen;
+  message[1] = CONFIG_IFACE;
+  memcpy(message+2, ifaceName, ifaceNameLen+1);
+  memcpy(message+2+ifaceNameLen+1, (char*)&ip, 4);
+  memcpy(message+2+ifaceNameLen+1+4, (char*)&mask, 4);
 
   // Builds the essential to communicate with xarpd
   int socket;
@@ -101,16 +114,17 @@ void configIface(const char *ifaceName, const char *ipAddress, const char *netma
 void setMTUSize(const char* name, unsigned short mtu)
 {
   unsigned char ifaceNameLen = strlen(name);
-  // OPCODE ifaceName \0 mtu size
-  unsigned char messageLen = 1 + ifaceNameLen+1 + 2;
+  // messageLength OPCODE ifaceName \0 mtu size
+  unsigned char messageLen = 1 + 1 + 1 + ifaceNameLen+1 + 2;
 
   char message[messageLen];
 
   // building the message
-  message[0] = SET_IFACE_MTU;
-  strcpy(message+1, name);
+  message[0] = messageLen;
+  message[1] = SET_IFACE_MTU;
+  strcpy(message+2, name);
   unsigned short mtuInNetworkByteOrder = htons(mtu);
-  memcpy(message+1+ifaceNameLen+1, (char*) &mtuInNetworkByteOrder, 2);
+  memcpy(message+2+ifaceNameLen+1, (char*) &mtuInNetworkByteOrder, 2);
 
   // Builds the essential to communicate with xarpd
   int socket;
@@ -126,7 +140,11 @@ int main(int argc, char const *argv[])
 {
   if (argc == 1)
   {
-    listIfaces();
+    listIfaces(NULL);
+  }
+  else if(argc == 2) // list specified iface
+  {
+    listIfaces((char*) argv[1]);
   }
   else if(argc == 3)
   {

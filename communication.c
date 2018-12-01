@@ -55,10 +55,8 @@ int _accept(int sockfd, struct sockaddr *cli_addr)
   int newsockfd = accept(sockfd, cli_addr, &lenCliAddr);
   if(newsockfd < 0)
   {
-    printf("lenCliAddr: %d\n",lenCliAddr);
     errorHandler();
   }
-
   return newsockfd;
 }
 

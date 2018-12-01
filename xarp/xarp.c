@@ -25,8 +25,8 @@ char getOperation(const char* c)
 {
   if(strcmp("show", c) == 0) return SHOW_TABLE;
   else if(strcmp("res", c) == 0) return RES_IP;
-  else if(strcmp("add", c) == 0) return ADD_LINE;
-  else if(strcmp("del", c) == 0) return DEL_LINE;
+  else if(strcmp("add", c) == 0) return ADD_ARP_LINE;
+  else if(strcmp("del", c) == 0) return DEL_ARP_LINE;
   else if(strcmp("ttl", c) == 0) return SET_ARP_TTL;
 
   return __ERROR__;
@@ -40,14 +40,14 @@ void showArpTable()
   loadSocketInfo(&serv_addr, LOOPBACK_IP, XARPD_PORT);
   makeNewSocketAndConnect(&socket, (struct sockaddr_in*) &serv_addr);
 
-  char request = SHOW_TABLE;
-  _send(socket, &request, 1);
-  close(socket);
+  char request[2];
+  request[0] = 2;
+  request[1] = SHOW_TABLE;
+  _send(socket, request, 2);
 
   int lineLen = sizeof(Node);
   char *buffer = (char*) malloc(lineLen);
   int n = 0;
-  makeNewSocketAndConnect(&socket, (struct sockaddr_in*) &serv_addr);
   int count = 0;
   printf("  Entrada  |   Endereço IP   | Endereço Ethernet | TTL\n");
   do
@@ -81,12 +81,13 @@ char addEntry(const char* ipAddr, const char* macAddress, const char* ttl)
   for(int i = 0; i < 6; i++) mac[i] = _mac[i];
 
   // Prepares info to send
-  unsigned char messageLen = 13;
+  unsigned char messageLen = 1 + 13;
   char message[messageLen];
-  message[0] = ADD_LINE;
-  memcpy(message+1, (char*)&ip, 4);
-  memcpy(message+1+4, (char*)&mac, 6);
-  memcpy(message+1+4+6, (char*)&ttlSize, 2);
+  message[0] = messageLen;
+  message[1] = ADD_ARP_LINE;
+  memcpy(message+2, (char*)&ip, 4);
+  memcpy(message+2+4, (char*)&mac, 6);
+  memcpy(message+2+4+6, (char*)&ttlSize, 2);
 
   // Builds the essential to communicate with xarpd
   int socket;
@@ -104,11 +105,12 @@ char setTTL(short int ttl)
 {
   unsigned int ttlInNetworkByteorder = htons(ttl);
 
-  // opCode ttl
-  unsigned char messageLen = 1 + 2;
+  // messageLen opCode ttl
+  unsigned char messageLen = 1 + 1 + 2;
   char message[messageLen];
-  message[0] = SET_ARP_TTL;
-  memcpy(message+1, (char*) &ttlInNetworkByteorder, 2);
+  message[0] = messageLen;
+  message[1] = SET_ARP_TTL;
+  memcpy(message+2, (char*) &ttlInNetworkByteorder, 2);
 
   int socket = buildCommunicationWithXARP();
   _send(socket, message, messageLen);
@@ -119,14 +121,15 @@ char setTTL(short int ttl)
 
 char delEntry(const char *ipAddress)
 {
-  // Opcode ipAddress
-  unsigned char messageLen = 1 + 4;
+  // messageLength Opcode ipAddress
+  unsigned char messageLen = 1 + 1 + 4;
   char message[messageLen];
 
-  message[0] = DEL_LINE;
+  message[0] = messageLen;
+  message[1] = DEL_ARP_LINE;
 
   unsigned int ip = inet_addr(ipAddress);
-  memcpy(message+1, (char*) &ip, 4);
+  memcpy(message+2, (char*) &ip, 4);
 
   int socket = buildCommunicationWithXARP();
   _send(socket, message, messageLen);
@@ -137,22 +140,23 @@ char delEntry(const char *ipAddress)
 
 void resolveAddress(const char *ipAddress)
 {
-  // Opcode ipaddress
-  unsigned char messageLen = 1 + 4;
+  // messageLen Opcode ipaddress
+  unsigned char messageLen = 1 + 1 + 4;
   char message[messageLen];
   unsigned int ip = inet_addr(ipAddress);
 
-  message[0] = RES_IP;
-  memcpy(message+1, (char*) &ip, 4);
+  message[0] = messageLen;
+  message[1] = RES_IP;
+  memcpy(message+2, (char*) &ip, 4);
 
   int socket = buildCommunicationWithXARP();
   _send(socket, message, messageLen);
-  close(socket);
+  // close(socket);
 
   // status // mac // ttl
   unsigned char bufferSize = 1 + 6 + 2;
   char buffer[bufferSize]; // buffer to store the xarpd response
-  socket = buildCommunicationWithXARP();
+  // socket = buildCommunicationWithXARP();
 
   int n = 0;
   do
@@ -204,7 +208,7 @@ int main(int argc, char *argv[])
       }
       resolveAddress(argv[2]);
       break;
-    case ADD_LINE:
+    case ADD_ARP_LINE:
       if(argc != 5)
       {
         // print error
@@ -214,7 +218,7 @@ int main(int argc, char *argv[])
       if(ret == __OK__) printf("Input added correctly\n");
       else printf("Error when adding entry\n");
       break;
-    case DEL_LINE:
+    case DEL_ARP_LINE:
       if(argc != 3)
       {
         // print error

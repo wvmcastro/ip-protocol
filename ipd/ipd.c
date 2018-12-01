@@ -25,7 +25,7 @@
 #define MAX_PACKET_SIZE 65536
 #define MIN_PACKET_SIZE 20
 #define MAX_IFACES	64
-#define DEBUG	0
+#define DEBUG	1
 
 // ########## Global ugly variables ##############
 // ##########                       ##############
@@ -263,18 +263,28 @@ void sendLines(int socket, Node* arpTable)
   }
 }
 
+void sendIface(int socket, MyInterface* iface)
+{
+	//converts ifaces atributes to network byte order
+	iface2NetworkByteOrder(iface);
+	_send(socket, (char*) iface, sizeof(MyInterface));
+}
+
+void safeIfaceCopy(MyInterface *dst, MyInterface *src, unsigned char ifaceIndex)
+{
+	const static unsigned char myInterfaceSize = sizeof(MyInterface);
+	sem_wait(&ifaceMutexes[ifaceIndex]);
+	memcpy(dst, src, myInterfaceSize);
+	sem_post(&ifaceMutexes[ifaceIndex]);
+}
+
 void sendIfaces(int socket)
 {
 	MyInterface aux;
-	unsigned int myIfaceLen = sizeof(MyInterface);
 	for(int i = 0; i < numIfaces; i++)
 	{
-		sem_wait(&ifaceMutexes[i]);
-		aux = my_ifaces[i]; // a shallow copy is enough
-		sem_post(&ifaceMutexes[i]);
-		//converts ifaces atributes to network byte order
-		iface2NetworkByteOrder(&aux);
-		_send(socket, (char*) &aux, myIfaceLen);
+		safeIfaceCopy(&aux, &my_ifaces[i], i);
+		sendIface(socket, &aux);
 	}
 }
 
@@ -403,6 +413,7 @@ void server()
 	int n, k, newsockfd;
 	char opCode;
 	char *message; // aux to message decoding
+	unsigned char messageLen;
 
 	if(DEBUG == 1)
 		printf("SERVER THREAD IS RUNNING\n");
@@ -412,35 +423,45 @@ void server()
 		if(DEBUG == 1)
 			printf("READY TO ACCEPT\n");
 
-		newsockfd = _accept(sockfd, (struct sockaddr*) &cli_addr);
 		n = 0;
+		memset(&cli_addr, 0, sizeof(struct sockaddr_in));
+		newsockfd = _accept(sockfd, (struct sockaddr*) &cli_addr);
 		do
 		{
 			k = _recv(newsockfd, buffer+n, BUFFERSIZE-n);
+			if(n == 0) messageLen = buffer[0];
 			n += k;
-		} while(k > 0);
-		close(newsockfd);
+		} while(k < messageLen);
 
 		if(n > 0)
 		{
-			opCode = buffer[0];
+			opCode = buffer[1];
+			message = buffer + 2;
 
 			if(DEBUG == 1)
 			 printf("OPCODE: %d\n", opCode);
 
-			message = buffer + 1;
 			char ifName[MAX_IFNAME_LEN];
       unsigned int ip;
 			short int _ttl;
 
 			switch(opCode)
 			{
-				case LIST_IFCES:
-					newsockfd = _accept(sockfd, (struct sockaddr*) &cli_addr);
+				case LIST_IFCES: // lists all ifaces
 					sendIfaces(newsockfd);
-
 					if(DEBUG == 1)
 						printf("IFACES SENT\n");
+					break;
+
+				case LIST_IFACE: // lists a single iface
+					strcpy(ifName, message);
+					n = getIfaceIndex(ifName);
+					if(n < numIfaces)
+					{
+						MyInterface aux;
+						safeIfaceCopy(&aux, &my_ifaces[n], n);
+						sendIface(newsockfd, &aux);
+					}
 					break;
 
 				case CONFIG_IFACE:
@@ -462,8 +483,8 @@ void server()
 					setMTUSize(ifName, mtuSize);
 					break;
 
-        case ADD_LINE:
-          //add a new line on arp table
+        case ADD_ARP_LINE:
+          //adds a new line on arp table
           ip = ntohl(*(unsigned int*)message);
           message += 4 + 6;
           short int ttl = ntohs(*(short int*)message);
@@ -472,18 +493,16 @@ void server()
           break;
 
 				case SHOW_TABLE:
-          newsockfd = _accept(sockfd, (struct sockaddr*) &cli_addr);
           sendLines(newsockfd, &arpTable);
           break;
 
-				case DEL_LINE:
+				case DEL_ARP_LINE:
 					ip = ntohl(*(unsigned int*) message);
 					removeLine(&arpTable, ip);
 					break;
 
 				case RES_IP:
 					ip = ntohl(*(unsigned int*) message);
-					newsockfd = _accept(sockfd, (struct sockaddr*) &cli_addr);
 					resolveIP(ip, newsockfd);
 					break;
 
@@ -495,10 +514,9 @@ void server()
 				default:
 					printf("OPERATION NOT SUPPORTED BY XARPD\n");
 			}
-			close(newsockfd);
 		}
+		close(newsockfd);
 	}
-
 }
 
 void decrementer()
