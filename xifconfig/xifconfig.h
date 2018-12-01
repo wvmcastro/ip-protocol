@@ -14,4 +14,6 @@ void configIface(const char*, const char*, const char*);
 
 void setMTUSize(const char*, unsigned short);
 
+void ifUpDown(char*, char*);
+
 #endif

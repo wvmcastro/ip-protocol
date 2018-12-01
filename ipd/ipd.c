@@ -25,7 +25,7 @@
 #define MAX_PACKET_SIZE 65536
 #define MIN_PACKET_SIZE 20
 #define MAX_IFACES	64
-#define DEBUG	1
+#define DEBUG	0
 
 // ########## Global ugly variables ##############
 // ##########                       ##############
@@ -220,6 +220,7 @@ void loadIfces(int numIfaces, char **argv)
 		get_iface_info(sockfd, argv[i], &my_ifaces[i-1]);
 		my_ifaces[i-1].id = i-1;
 		my_ifaces[i-1].mtu = 1500;
+		my_ifaces[i-1].upDown = IFACE_UP;
 	}
 }
 
@@ -284,7 +285,9 @@ void sendIfaces(int socket)
 	for(int i = 0; i < numIfaces; i++)
 	{
 		safeIfaceCopy(&aux, &my_ifaces[i], i);
-		sendIface(socket, &aux);
+
+		if(aux.upDown == IFACE_UP)
+			sendIface(socket, &aux);
 	}
 }
 
@@ -398,6 +401,21 @@ void resolveIP(unsigned int ip, int socket)
 	_send(socket, (char*) &response, 9);
 }
 
+void toggleInterface(char *ifaceName, unsigned char _upDown)
+{
+	unsigned int i = getIfaceIndex(ifaceName);
+	if(i < numIfaces)
+	{
+		sem_wait(&ifaceMutexes[i]);
+		my_ifaces[i].upDown = _upDown;
+		// deleting the entry from arp arpTable
+		removeLine(&arpTable, my_ifaces[i].ipAddress);
+
+		// TODO: delete the interface entry from ip table
+		sem_post(&ifaceMutexes[i]);
+	}
+}
+
 void server()
 {
 	unsigned char BUFFERSIZE = 255;
@@ -439,10 +457,11 @@ void server()
 			message = buffer + 2;
 
 			if(DEBUG == 1)
-			 printf("OPCODE: %d\n", opCode);
+				printf("OPCODE: %d\n", opCode);
 
 			char ifName[MAX_IFNAME_LEN];
       unsigned int ip;
+			unsigned char ifaceNameLen;
 			short int _ttl;
 
 			switch(opCode)
@@ -460,7 +479,8 @@ void server()
 					{
 						MyInterface aux;
 						safeIfaceCopy(&aux, &my_ifaces[n], n);
-						sendIface(newsockfd, &aux);
+						if(aux.upDown == IFACE_UP)
+							sendIface(newsockfd, &aux);
 					}
 					break;
 
@@ -478,9 +498,14 @@ void server()
 				case SET_IFACE_MTU:
 					// message decode
 					strcpy(ifName, message);
-					unsigned char ifaceNameLen = strlen(ifName);
+					ifaceNameLen = strlen(ifName);
 					unsigned short mtuSize = ntohs(* (unsigned short*)(message+ifaceNameLen+1));
 					setMTUSize(ifName, mtuSize);
+					break;
+
+				case TURN_IFACE_ON_OFF:
+					ifaceNameLen = strlen(message);
+					toggleInterface(message, (unsigned char) message[ifaceNameLen+1]);
 					break;
 
         case ADD_ARP_LINE:

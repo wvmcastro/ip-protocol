@@ -136,6 +136,38 @@ void setMTUSize(const char* name, unsigned short mtu)
   close(socket);
 }
 
+void ifUpDown(char *ifName, char *upDown)
+{
+  unsigned char ifaceNameLen = strlen(ifName);
+
+  // messageLength opCode ifName \0 UP/DOWN
+  unsigned char messageLen = 1 + 1 + ifaceNameLen+1 + 1;
+  char message[messageLen];
+
+  // building the message
+  message[0] = messageLen;
+  message[1] = TURN_IFACE_ON_OFF;
+  strcpy(message+2, ifName);
+
+  if(strcmp(upDown, "up") == 0)
+  {
+    message[messageLen-1] = IFACE_UP;
+  }
+  else
+  {
+    message[messageLen-1] = IFACE_DOWN;
+  }
+
+  // Builds the essential to communicate with xarpd
+  int socket;
+  struct sockaddr_in serv_addr;
+  loadSocketInfo(&serv_addr, LOOPBACK_IP, XARPD_PORT);
+  makeNewSocketAndConnect(&socket, (struct sockaddr_in*) &serv_addr);
+
+  _send(socket, message, messageLen);
+  close(socket);
+}
+
 int main(int argc, char const *argv[])
 {
   if (argc == 1)
@@ -148,7 +180,15 @@ int main(int argc, char const *argv[])
   }
   else if(argc == 3)
   {
-    setMTUSize(argv[1], (unsigned short) atoi(argv[2]));
+    if((strcmp(argv[2], "down") & strcmp(argv[2], "up")) == 0)
+    {
+      ifUpDown((char*) argv[1], (char*) argv[2]);
+    }
+    else
+    {
+        setMTUSize(argv[1], (unsigned short) atoi(argv[2]));
+    }
+
   }
   else
   {

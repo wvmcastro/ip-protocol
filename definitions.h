@@ -14,6 +14,8 @@
 #define XARPD_PORT        5050
 #define LISTEN_ENQ        5 // listen queue size
 #define MAX_IFNAME_LEN    22
+#define IFACE_UP          1
+#define IFACE_DOWN        0
 // -------------- End general macros -----------------
 
 
@@ -36,17 +38,22 @@
 
 // ---------- Inter program communication ------------
 // OPCODES
-#define SHOW_TABLE    0
-#define RES_IP        1
-#define ADD_ARP_LINE  2
-#define DEL_ARP_LINE  3
-#define SET_ARP_TTL   4
-#define LIST_IFCES    5
-#define CONFIG_IFACE  6
-#define SET_IFACE_MTU 7
+// 0 - 49 xifconfig
+#define LIST_IFCES        0
+#define CONFIG_IFACE      1
+#define SET_IFACE_MTU     2
+#define LIST_IFACE        3
+#define TURN_IFACE_ON_OFF 4
 
-// new features implemented in ipd
-#define LIST_IFACE    8
+// 50 - 99 xarp
+#define SHOW_TABLE    50
+#define RES_IP        51
+#define ADD_ARP_LINE  52
+#define DEL_ARP_LINE  53
+#define SET_ARP_TTL   54
+
+// 100 - 149 xroute
+
 // -------- End inter program communication ----------
 
 #endif

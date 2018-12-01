@@ -5,6 +5,7 @@
 
 typedef struct
 {
+  unsigned char upDown;
   unsigned int id;
   int		sockfd;
 	short		ttl;
