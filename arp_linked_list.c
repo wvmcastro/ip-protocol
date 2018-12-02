@@ -1,12 +1,12 @@
 #include "definitions.h"
-#include "linked_list.h"
+#include "arp_linked_list.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <semaphore.h>
 #include <string.h>
 
-char addLine(Node *table, Node *line, unsigned char type)
+char addLine(ArpNode *table, ArpNode *line, unsigned char type)
 {
   // If the entry is already in the list delet it
   // Just to maintain consistency
@@ -21,16 +21,16 @@ char addLine(Node *table, Node *line, unsigned char type)
   return __OK__;
 }
 
-char removeLine(Node *table, unsigned int ipAddress)
+char removeLine(ArpNode *table, unsigned int ipAddress)
 {
   // The table is blocked when a deletion is done
-  Node *prev;
+  ArpNode *prev;
   prev = searchLine(table, ipAddress);
 
   sem_wait(&(table->semaphore));
   if(prev != NULL)
   {
-    Node *n = prev->next;
+    ArpNode *n = prev->next;
 
     prev->next = n->next;
     free(n);
@@ -42,10 +42,10 @@ char removeLine(Node *table, unsigned int ipAddress)
 }
 
 // always returns the previous node to the desired node
-Node* searchLine(Node *table, unsigned int ipAddress)
+ArpNode* searchLine(ArpNode *table, unsigned int ipAddress)
 {
   sem_wait(&(table->semaphore));
-  Node *n = table;
+  ArpNode *n = table;
   while(n->next != NULL)
   {
     if((n->next)->ipAddress == ipAddress)
@@ -59,7 +59,7 @@ Node* searchLine(Node *table, unsigned int ipAddress)
   return NULL;
 }
 
-void printLine(Node *line, unsigned int lineId)
+void printLine(ArpNode *line, unsigned int lineId)
 {
   printf("%10d | ", lineId);
 
@@ -73,10 +73,10 @@ void printLine(Node *line, unsigned int lineId)
   printf("%3d\n", line->ttl);
 }
 
-void printTable(Node *table)
+void printTable(ArpNode *table)
 {
   printf("  Entrada  |   Endereço IP   | Endereço Ethernet | TTL\n");
-  Node *n = table->next;
+  ArpNode *n = table->next;
 
   unsigned int i = 0;
   while(n != NULL)
@@ -87,9 +87,9 @@ void printTable(Node *table)
   }
 }
 
-Node* newLine(unsigned int ipAddress, unsigned char *macAddress, short int ttl, char *ifName)
+ArpNode* newLine(unsigned int ipAddress, unsigned char *macAddress, short int ttl, char *ifName)
 {
-  Node *node = (Node*) malloc(sizeof(Node));
+  ArpNode *node = (ArpNode*) malloc(sizeof(ArpNode));
   node->ipAddress = ipAddress;
 
   for(unsigned int i = 0; i < 6; i++)
@@ -106,16 +106,3 @@ Node* newLine(unsigned int ipAddress, unsigned char *macAddress, short int ttl, 
   sem_init(&(node->semaphore), 0, 1);
   return node;
 }
-
-// int main()
-// {
-//   unsigned char macAddress[6] = {62, 92, 63, 93, 64, 94};
-//   Node* l0 = newLine(0, macAddress, 64);
-//   Node table;
-//   table.next = NULL;
-//   addLine(&table, l0);
-//   printTable(&table);
-//   removeLine(&table, 0);
-//   printTable(&table);
-//   return 0;
-// }

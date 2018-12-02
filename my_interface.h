@@ -2,6 +2,7 @@
 #define __MY_INTERFACE__
 
 #include "definitions.h"
+#include <semaphore.h>
 
 typedef struct
 {
@@ -19,6 +20,7 @@ typedef struct
   unsigned int txPackets;
   unsigned long int rxBytes;
   unsigned long int txBytes;
+  sem_t semaphore;
 } MyInterface;
 
 #endif

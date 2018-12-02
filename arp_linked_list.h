@@ -1,8 +1,9 @@
-#ifndef __LINKED_LIST__
+#ifndef __ARP_LINKED_LIST__
 
-#define __LINKED_LIST__
+#define __ARP_LINKED_LIST__
 
 #include <semaphore.h>
+#include "definitions.h"
 
 // Node of the linked list where the ARP table will be stored
 typedef struct lNode
@@ -14,21 +15,21 @@ typedef struct lNode
   char ifaceName[MAX_IFNAME_LEN];
   sem_t semaphore;
   struct lNode *next;
-} Node;
+} ArpNode;
 
-char addLine(Node*, Node*, unsigned char);
+char addLine(ArpNode*, ArpNode*, unsigned char);
 
-char removeLine(Node*, unsigned int);
+char removeLine(ArpNode*, unsigned int);
 
-Node* newLine(unsigned int, unsigned char*, short int, char*);
+ArpNode* newLine(unsigned int, unsigned char*, short int, char*);
 
 // This functions returns a pointer to the previous node
 // of the node who has the requested ip address
 // if Null means that there is no node with the given ip address
-Node* searchLine(Node*, unsigned int);
+ArpNode* searchLine(ArpNode*, unsigned int);
 
-void printLine(Node*, unsigned int);
+void printLine(ArpNode*, unsigned int);
 
-void printTable(Node*);
+void printTable(ArpNode*);
 
 #endif

@@ -1,7 +1,7 @@
 #include "../definitions.h"
 #include "xarp.h"
 #include "../communication.h"
-#include "../linked_list.h"
+#include "../arp_linked_list.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -45,7 +45,7 @@ void showArpTable()
   request[1] = SHOW_TABLE;
   _send(socket, request, 2);
 
-  int lineLen = sizeof(Node);
+  int lineLen = sizeof(ArpNode);
   char *buffer = (char*) malloc(lineLen);
   int n = 0;
   int count = 0;
@@ -57,7 +57,7 @@ void showArpTable()
     if(n == lineLen)
     {
       // printInterface((MyInterface*) buffer);
-      Node *aux = (Node*) buffer;
+      ArpNode *aux = (ArpNode*) buffer;
       aux->ipAddress = ntohl(aux->ipAddress);
       aux->ttl = ntohs(aux->ttl);
       printLine(aux, count++);
