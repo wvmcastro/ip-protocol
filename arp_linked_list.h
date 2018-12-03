@@ -17,19 +17,19 @@ typedef struct lNode
   struct lNode *next;
 } ArpNode;
 
-char addLine(ArpNode*, ArpNode*, unsigned char);
+char addARPLine(ArpNode*, ArpNode*, unsigned char);
 
-char removeLine(ArpNode*, unsigned int);
+char removeARPLine(ArpNode*, unsigned int);
 
-ArpNode* newLine(unsigned int, unsigned char*, short int, char*);
+ArpNode* newARPLine(unsigned int, unsigned char*, short int, char*);
 
 // This functions returns a pointer to the previous node
 // of the node who has the requested ip address
 // if Null means that there is no node with the given ip address
-ArpNode* searchLine(ArpNode*, unsigned int);
+ArpNode* searchARPLine(ArpNode*, unsigned int);
 
-void printLine(ArpNode*, unsigned int);
+void printARPLine(ArpNode*, unsigned int);
 
-void printTable(ArpNode*);
+void printARPTable(ArpNode*);
 
 #endif

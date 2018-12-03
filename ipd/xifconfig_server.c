@@ -123,8 +123,8 @@ void configIface(MyInterface *ifaces, const char *ifname, int numIfaces,
 		ifaces[i].ipAddress = ip;
 		ifaces[i].netMask = mask;
 
-    ArpNode *l = newLine(ip, ifaces[i].macAddress, -1, ifaces[i].name);
-    addLine(arpTable, l, STATIC_ENTRY);
+    ArpNode *l = newARPLine(ip, ifaces[i].macAddress, -1, ifaces[i].name);
+    addARPLine(arpTable, l, STATIC_ENTRY);
 
 		sem_post(&ifaces[i].semaphore);
 	}
@@ -165,7 +165,7 @@ void toggleInterface(char *ifaceName, unsigned char _upDown,
 		sem_wait(&ifaces[i].semaphore);
 		ifaces[i].upDown = _upDown;
 		// deleting the entry from arp arpTable
-		removeLine(arpTable, ifaces[i].ipAddress);
+		removeARPLine(arpTable, ifaces[i].ipAddress);
 
 		// TODO: delete the interface entry from ip table
 		sem_post(&ifaces[i].semaphore);

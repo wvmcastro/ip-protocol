@@ -23,7 +23,7 @@ int buildCommunicationWithXARP()
 
 char getOperation(const char* c)
 {
-  if(strcmp("show", c) == 0) return SHOW_TABLE;
+  if(strcmp("show", c) == 0) return SHOW_ARP_TABLE;
   else if(strcmp("res", c) == 0) return RES_IP;
   else if(strcmp("add", c) == 0) return ADD_ARP_LINE;
   else if(strcmp("del", c) == 0) return DEL_ARP_LINE;
@@ -42,7 +42,7 @@ void showArpTable()
 
   char request[2];
   request[0] = 2;
-  request[1] = SHOW_TABLE;
+  request[1] = SHOW_ARP_TABLE;
   _send(socket, request, 2);
 
   int lineLen = sizeof(ArpNode);
@@ -60,7 +60,7 @@ void showArpTable()
       ArpNode *aux = (ArpNode*) buffer;
       aux->ipAddress = ntohl(aux->ipAddress);
       aux->ttl = ntohs(aux->ttl);
-      printLine(aux, count++);
+      printARPLine(aux, count++);
       printf("\n");
     }
   } while(n);
@@ -192,7 +192,7 @@ int main(int argc, char *argv[])
   char ret;
   switch(opCode)
   {
-    case SHOW_TABLE:
+    case SHOW_ARP_TABLE:
       if(argc != 2)
       {
         // print error

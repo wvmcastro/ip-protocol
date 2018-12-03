@@ -6,11 +6,11 @@
 #include <semaphore.h>
 #include <string.h>
 
-char addLine(ArpNode *table, ArpNode *line, unsigned char type)
+char addARPLine(ArpNode *table, ArpNode *line, unsigned char type)
 {
   // If the entry is already in the list delet it
   // Just to maintain consistency
-  removeLine(table, line->ipAddress);
+  removeARPLine(table, line->ipAddress);
 
   sem_wait(&(table->semaphore));
   if(table == NULL) return __ERROR__;
@@ -21,11 +21,11 @@ char addLine(ArpNode *table, ArpNode *line, unsigned char type)
   return __OK__;
 }
 
-char removeLine(ArpNode *table, unsigned int ipAddress)
+char removeARPLine(ArpNode *table, unsigned int ipAddress)
 {
   // The table is blocked when a deletion is done
   ArpNode *prev;
-  prev = searchLine(table, ipAddress);
+  prev = searchARPLine(table, ipAddress);
 
   sem_wait(&(table->semaphore));
   if(prev != NULL)
@@ -42,7 +42,7 @@ char removeLine(ArpNode *table, unsigned int ipAddress)
 }
 
 // always returns the previous node to the desired node
-ArpNode* searchLine(ArpNode *table, unsigned int ipAddress)
+ArpNode* searchARPLine(ArpNode *table, unsigned int ipAddress)
 {
   sem_wait(&(table->semaphore));
   ArpNode *n = table;
@@ -59,7 +59,7 @@ ArpNode* searchLine(ArpNode *table, unsigned int ipAddress)
   return NULL;
 }
 
-void printLine(ArpNode *line, unsigned int lineId)
+void printARPLine(ArpNode *line, unsigned int lineId)
 {
   printf("%10d | ", lineId);
 
@@ -73,7 +73,7 @@ void printLine(ArpNode *line, unsigned int lineId)
   printf("%3d\n", line->ttl);
 }
 
-void printTable(ArpNode *table)
+void printARPTable(ArpNode *table)
 {
   printf("  Entrada  |   Endereço IP   | Endereço Ethernet | TTL\n");
   ArpNode *n = table->next;
@@ -81,13 +81,13 @@ void printTable(ArpNode *table)
   unsigned int i = 0;
   while(n != NULL)
   {
-    printLine(n, i);
+    printARPLine(n, i);
     n = n->next;
     i++;
   }
 }
 
-ArpNode* newLine(unsigned int ipAddress, unsigned char *macAddress, short int ttl, char *ifName)
+ArpNode* newARPLine(unsigned int ipAddress, unsigned char *macAddress, short int ttl, char *ifName)
 {
   ArpNode *node = (ArpNode*) malloc(sizeof(ArpNode));
   node->ipAddress = ipAddress;

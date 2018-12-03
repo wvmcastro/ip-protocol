@@ -30,17 +30,17 @@ void xarp_server_run(int newsockfd,
       ip = ntohl(*(unsigned int*)message);
       message += 4 + 6;
       _ttl = ntohs(*(short int*)message);
-      ArpNode *l = newLine(ip, (unsigned char*)(message - 6), _ttl, NULL);
-      addLine(arpTable, l, STATIC_ENTRY);
+      ArpNode *l = newARPLine(ip, (unsigned char*)(message - 6), _ttl, NULL);
+      addARPLine(arpTable, l, STATIC_ENTRY);
       break;
 
-    case SHOW_TABLE:
+    case SHOW_ARP_TABLE:
       sendLines(newsockfd, arpTable);
       break;
 
     case DEL_ARP_LINE:
       ip = ntohl(*(unsigned int*) message);
-      removeLine(arpTable, ip);
+      removeARPLine(arpTable, ip);
       break;
 
     case RES_IP:
@@ -84,7 +84,7 @@ void resolveIP(unsigned int ip, ArpNode *arpTable,
                int socket)
 {
 	// first thing is to look for the ip at the arp table
-	ArpNode *line = searchLine(arpTable, ip);
+	ArpNode *line = searchARPLine(arpTable, ip);
 
 	if(line == NULL) // line not found
 	{
@@ -133,7 +133,7 @@ void resolveIP(unsigned int ip, ArpNode *arpTable,
 
 			if(ret != ETIMEDOUT) // ie: timeout was not exceeded
 			{
-				line = searchLine(arpTable, ip);
+				line = searchARPLine(arpTable, ip);
 			}
 		}
 	}

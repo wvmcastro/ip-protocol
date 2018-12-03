@@ -46,14 +46,16 @@
 #define TURN_IFACE_ON_OFF 4
 
 // 50 - 99 xarp
-#define SHOW_TABLE    50
-#define RES_IP        51
-#define ADD_ARP_LINE  52
-#define DEL_ARP_LINE  53
-#define SET_ARP_TTL   54
+#define SHOW_ARP_TABLE  50
+#define RES_IP          51
+#define ADD_ARP_LINE    52
+#define DEL_ARP_LINE    53
+#define SET_ARP_TTL     54
 
 // 100 - 149 xroute
-
+#define SHOW_ROUTE_TABLE  100
+#define ADD_ROUTE_LINE    101
+#define DEL_ROUTE_LINE    102
 // -------- End inter program communication ----------
 
 #endif

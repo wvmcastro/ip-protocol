@@ -18,14 +18,16 @@
 #include "protocol_headers.h"
 #include "../communication.h"
 #include "../arp_linked_list.h"
+#include "../ip_linked_list.h"
 #include "arp_protocol.h"
 #include "xifconfig_server.h"
 #include "xarp_server.h"
+#include "xroute_server.h"
 
 #define MAX_PACKET_SIZE 65536
 #define MIN_PACKET_SIZE 20
 #define MAX_IFACES	64
-#define DEBUG 0
+#define DEBUG 1
 
 // ########## Global ugly variables ##############
 // ##########                       ##############
@@ -38,11 +40,13 @@ unsigned char *waitingReply;
 ArpNode arpTable;
 short int currentTTL = _DEFAULT_ARP_TTL_;
 
+// routing table
+IPNode routeTable;
+
 // mutex for server thread used in xarp res
 sem_t xarpServerSemaphore;
 // ###############################################
 // ###############################################
-
 
 // Print an Ethernet address
 void print_eth_address(char *s, unsigned char *eth_addr)
@@ -83,7 +87,6 @@ void print_usage()
 	exit(1);
 }
 
-
 // Break this function to implement the ARP functionalities.
 void doProcess(unsigned char* packet, int len, MyInterface *iface)
 {
@@ -106,13 +109,13 @@ void doProcess(unsigned char* packet, int len, MyInterface *iface)
 			// copy and paste code sorry. I'm in a hurry, but you don't have to worry
 			// searchs if some ie has the ip ip address requested
 			unsigned char i;
-			unsigned int ifaceIP, ifaceNetmask;
+			unsigned int ifaceIP;
 			unsigned char ifaceMAC[6];
 			for(i = 0; i < numIfaces; i++)
 			{
 				sem_wait(&my_ifaces[i].semaphore);
 				ifaceIP = my_ifaces[i].ipAddress;
-				ifaceNetmask = my_ifaces[i].netMask;
+				// ifaceNetmask = my_ifaces[i].netMask;
 				memcpy(ifaceMAC, my_ifaces[i].macAddress, 6);
 				sem_post(&my_ifaces[i].semaphore);
 
@@ -146,8 +149,8 @@ void doProcess(unsigned char* packet, int len, MyInterface *iface)
 							printf("%s: THIS REPLY WAS FOR ME!\n", iface->name);
 
 						// adds to list and wakes server thread
-						ArpNode *_newLine = newLine(ntohl(arp_spa), arp->arp_sha, currentTTL, iface->name);
-						addLine(&arpTable, _newLine, DYNAMIC_ENTRY);
+						ArpNode *_newARPLine = newARPLine(ntohl(arp_spa), arp->arp_sha, currentTTL, iface->name);
+						addARPLine(&arpTable, _newARPLine, DYNAMIC_ENTRY);
 
 						// Just some extra careful
 						if(waitingReply[iface->id] != 0)
@@ -186,7 +189,8 @@ void read_iface(void *arg)
 	while(1)
 	{
 		n = recvfrom(ifn->sockfd, packet_buffer, MAX_PACKET_SIZE, 0, &saddr, &saddr_len);
-		if(n < 0) {
+		if(n < 0)
+		{
 			fprintf(stderr, "ERROR: %s\n", strerror(errno));
 			exit(1);
 		}
@@ -196,7 +200,6 @@ void read_iface(void *arg)
 			doProcess(packet_buffer, n, ifn);
 	}
 }
-/* */
 
 void setupIfces(int numIfaces, char **argv)
 {
@@ -269,11 +272,6 @@ void server()
 			if(DEBUG == 1)
 				printf("OPCODE: %d\n", opCode);
 
-			char ifName[MAX_IFNAME_LEN];
-      unsigned int ip;
-			unsigned char ifaceNameLen;
-			short int _ttl;
-
 			if(opCode < 50)
 			{
 				xifconifg_server_run(newsockfd, opCode, message, &arpTable, my_ifaces, numIfaces);
@@ -294,39 +292,49 @@ void server()
 	}
 }
 
+void decrementArpTTL()
+{
+	ArpNode *line;
+	ArpNode *next;
+	line = arpTable.next;
+	while (line != NULL)
+	{
+		next = line->next;
+
+		if(line->ttl != -1)
+			line->ttl--;
+
+		if (line->ttl== 0)
+		{
+			removeARPLine(&arpTable, line->ipAddress);
+		}
+		line = next;
+	}
+}
+
 void decrementer()
 {
-  ArpNode *line;
-	ArpNode *next;
   while(1)
 	{
     sleep(1);
-    line = arpTable.next;
-    while (line != NULL)
-    {
-			next = line->next;
-
-			if(line->ttl != -1)
-				line->ttl--;
-
-      if (line->ttl== 0)
-      {
-        removeLine(&arpTable, line->ipAddress);
-      }
-
-			line = next;
-    }
+		decrementArpTTL();
   }
+}
+
+void initTables()
+{
+	arpTable.next = NULL;
+	routeTable.next = NULL;
+	sem_init(&(arpTable.semaphore), 0, 1);
+	sem_init(&(routeTable.semaphore), 0, 1);
 }
 
 // main function
 int main(int argc, char** argv)
 {
-	arpTable.next = NULL;
-	sem_init(&(arpTable.semaphore), 0, 1);
 
+	initTables();
 	sem_init(&xarpServerSemaphore, 0 , 0);
-
 	if (argc < 2)
 		print_usage();
 
@@ -353,8 +361,8 @@ int main(int argc, char** argv)
 		if(DEBUG == 1)
 			print_eth_address(my_ifaces[i].name, my_ifaces[i].macAddress);
 
-    int err = pthread_create(&(tid[i]), NULL, (void*) read_iface, (void *) &my_ifaces[i]);
 		// Create one thread for each interface. Each thread should run the function read_iface.
+    pthread_create(&(tid[i]), NULL, (void*) read_iface, (void *) &my_ifaces[i]);
 	}
 
   for (i = 0; i < argc - 1; i++)
