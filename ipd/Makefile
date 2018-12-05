@@ -10,7 +10,7 @@ xifconfig_server.o: xifconfig_server.h arp_linked_list.o ../my_interface.h ../de
 xarp_server.o: xarp_server.h xarp_server.c arp_linked_list.o ../my_interface.h ../communication.h arp_protocol.o
 	gcc -c -Wall -pedantic xarp_server.c -pthread
 
-xroute_server.o: xroute_server.h xroute_server.c ip_linked_list.o
+xroute_server.o: xroute_server.h xroute_server.c ip_linked_list.o communication.o
 	gcc -c -Wall -pedantic xroute_server.c
 
 arp_protocol.o: arp_protocol.h arp_protocol.c protocol_headers.h ../my_interface.h ../definitions.h communication.o

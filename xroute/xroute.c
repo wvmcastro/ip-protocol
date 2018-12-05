@@ -35,8 +35,8 @@ char addOrRemoveRouteLine(char opCode, const char *_target, const char *_netmask
   message[0] = messageLen;
   message[1] = opCode;
   memcpy(message+2, (char*)&target, 4);
-  memcpy(message+2+4, (char*)&netmask, 4);
-  memcpy(message+2+4+4, (char*)&gateway, 4);
+  memcpy(message+2+4, (char*)&gateway, 4);
+  memcpy(message+2+4+4, (char*)&netmask, 4);
 
   // sends the message
   int socket = _socket(AF_INET, SOCK_STREAM, 0);
@@ -56,14 +56,18 @@ char showRouteTable()
   int socket = _socket(AF_INET, SOCK_STREAM, 0);
   sendPacket(socket, LOOPBACK_IP, XARPD_PORT, message, 2);
 
+  int i = 0;
   int n = 0;
   unsigned char IPNodeLen = sizeof(IPNode);
   char *buffer = (char*) malloc(IPNodeLen);
+  IPNode* line;
   do
   {
     if(n == IPNodeLen)
     {
-      // printa aqui
+      line = (IPNode*) buffer;
+      routeLine2HostByteOrder(line);
+      printLine(line, i++);
       n = 0;
     }
     n += _recv(socket, buffer, IPNodeLen);
@@ -72,6 +76,16 @@ char showRouteTable()
   close(socket);
   return __OK__;
 }
+
+void routeLine2HostByteOrder(IPNode* line)
+{
+  line->dstIP = ntohl(line->dstIP);
+  line->dstIP = ntohl(line->dstIP);
+  line->gatewayIP = ntohl(line->gatewayIP);
+  line->netmask = ntohl(line->netmask);
+  line->ttl = ntohs(line->ttl);
+}
+
 
 int main(int argc, char *argv[])
 {

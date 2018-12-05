@@ -19,14 +19,17 @@ typedef struct LNode
 
 char addLine(IPNode*, IPNode*);
 
-char removeLine(IPNode*, unsigned int);
+char removeLine(IPNode*, unsigned int, unsigned int, unsigned int);
 
 IPNode* newLine(unsigned int, unsigned int, unsigned int, short int, char*);
 
 // This functions returns a pointer to the previous node
-// of the node who has the requested ip address
-// if Null means that there is no node with the given ip address
-IPNode* searchLine(IPNode*, unsigned int);
+// of the node who has the requested target and gateway ipAddress and netmask
+// if Null means that there is no node with the exact three numbers
+IPNode* searchLine(IPNode*, unsigned int, unsigned int, unsigned int);
+
+// returns if two entries are in the same network
+char inSameNetwork(IPNode*, IPNode*);
 
 void printLine(IPNode*, unsigned int);
 

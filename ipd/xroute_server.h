@@ -6,7 +6,9 @@
 
 void xroute_server_run(int,
                        unsigned char, char*,
-                       IPNode* routeTable,
-                       MyInterface* ifaces, int numIfaces);
+                       IPNode*,
+                       MyInterface*, int);
 
+void sendRouteTable(int, IPNode*);
+void routeLine2NetworkByteOrder(IPNode*);
 #endif

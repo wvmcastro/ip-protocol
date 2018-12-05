@@ -283,6 +283,10 @@ void server()
 												&arpTable, &currentTTL,
 												my_ifaces, numIfaces, waitingReply);
 			}
+			else if(opCode >= 100 && opCode < 150)
+			{
+				xroute_server_run(newsockfd, opCode, message, &routeTable, my_ifaces, numIfaces);
+			}
 			else
 			{
 				printf("ERROR: OPCODE NOT RECOGNIZED\n");

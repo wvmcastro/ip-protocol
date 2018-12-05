@@ -8,12 +8,13 @@
 
 char addARPLine(ArpNode *table, ArpNode *line, unsigned char type)
 {
+  if(table == NULL) return __ERROR__;
+  
   // If the entry is already in the list delet it
   // Just to maintain consistency
   removeARPLine(table, line->ipAddress);
 
   sem_wait(&(table->semaphore));
-  if(table == NULL) return __ERROR__;
   line->type = type;
   line->next = table->next;
   table->next = line;

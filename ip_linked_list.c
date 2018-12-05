@@ -8,23 +8,69 @@
 
 char addLine(IPNode *table, IPNode *line)
 {
+  if(table == NULL) return __ERROR__;
+
   // If the entry is already in the list delet it
   // Just to maintain consistency
-  removeLine(table, line->dstIP);
+  removeLine(table, line->dstIP, line->gatewayIP, line->netmask);
 
+  // blocks the table
   sem_wait(&(table->semaphore));
-  if(table == NULL) return __ERROR__;
-  line->next = table->next;
-  table->next = line;
+
+  // adds lines in a sorted way
+  IPNode *prev, *current, *aux;
+  prev = table;
+  current = table->next;
+  char found = 0;
+
+  while(current != NULL && !found)
+  {
+    if(inSameNetwork(current, line) && (line->netmask < current->netmask))
+    {
+      // if the new line entry has a minor prefix lights up found flag
+      found = 1;
+    }
+
+    if(!found)
+    {
+      aux = current->next;
+      prev = current;
+      current = aux;
+    }
+
+  }
+
+  line->next = prev->next;
+  prev->next = line;
+
+  // releases the table
   sem_post(&(table->semaphore));
+
   return __OK__;
 }
 
-char removeLine(IPNode *table, unsigned int ipAddress)
+char inSameNetwork(IPNode *a, IPNode *b)
+{
+  unsigned int n1, n2;
+  if(a->netmask < b->netmask)
+  {
+    n1 = a->dstIP & a->netmask;
+    n2 = b->dstIP & a->netmask;
+  }
+  else
+  {
+    n1 = a->dstIP & b->netmask;
+    n2 = b->dstIP & b->netmask;
+  }
+  printf("n1:%u n2:%u\n", n1, n2);
+  return n1 == n2;
+}
+
+char removeLine(IPNode *table, unsigned int dstIP, unsigned int gatewayIP, unsigned int netmask)
 {
   // The table is blocked when a deletion is done
   IPNode *prev;
-  prev = searchLine(table, ipAddress);
+  prev = searchLine(table, dstIP, gatewayIP, netmask);
 
   sem_wait(&(table->semaphore));
   if(prev != NULL)
@@ -41,13 +87,15 @@ char removeLine(IPNode *table, unsigned int ipAddress)
 }
 
 // always returns the previous node to the desired node
-IPNode* searchLine(IPNode *table, unsigned int ipAddress)
+IPNode* searchLine(IPNode *table, unsigned int dstIP, unsigned int gatewayIP, unsigned int netmask)
 {
   sem_wait(&(table->semaphore));
   IPNode *n = table;
   while(n->next != NULL)
   {
-    if((n->next)->dstIP == ipAddress)
+    if((n->next)->dstIP == dstIP &&
+       (n->next)->gatewayIP == gatewayIP &&
+       (n->next)->netmask == netmask)
     {
       sem_post(&(table->semaphore));
       return n;
@@ -74,9 +122,16 @@ void printLine(IPNode *line, unsigned int lineId)
   printf("%3u.%3u.%3u.%3u | ", (fourBytes & 0xFF000000)>>24, (fourBytes & 0x00FF0000) >> 16,
                             (fourBytes & 0x0000FF00) >> 8, fourBytes & 0x000000FF);
 
-  printf("%22s | ", line->ifaceName);
+  printf("%s | ", line->ifaceName);
 
-  printf("%3d\n", line->ttl);
+  if(line->ttl == -1)
+  {
+    printf("Inf\n");
+  }
+  else
+  {
+      printf("%3d\n", line->ttl);
+  }
 }
 
 void printTable(IPNode *table)
