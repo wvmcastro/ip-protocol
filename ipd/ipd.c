@@ -87,6 +87,79 @@ void print_usage()
 	exit(1);
 }
 
+void arpPacketHandler(char *packet, int len, MyInterface *iface)
+{
+	struct arp_hdr *arp = (struct arp_hdr*) packet;
+	unsigned short type = ntohs(arp->arp_op);
+	unsigned int arp_dpa = ntohl(*(unsigned int*) arp->arp_dpa);
+	unsigned int arp_spa = ntohl(*(unsigned int*) arp->arp_spa);
+
+	if (type == ARP_REQUEST)
+	{
+		iface->rxPackets++;
+		iface->rxBytes += len;
+
+		// copy and paste code sorry. I'm in a hurry, but you don't have to worry
+		// searchs if some ie has the ip ip address requested
+		unsigned char i;
+		unsigned int ifaceIP;
+		unsigned char ifaceMAC[6];
+		for(i = 0; i < numIfaces; i++)
+		{
+			sem_wait(&my_ifaces[i].semaphore);
+			ifaceIP = my_ifaces[i].ipAddress;
+			// ifaceNetmask = my_ifaces[i].netMask;
+			memcpy(ifaceMAC, my_ifaces[i].macAddress, 6);
+			sem_post(&my_ifaces[i].semaphore);
+
+			if(ifaceIP == arp_dpa) break;
+		}
+
+		if(i < numIfaces) // there is an interface with the destination protocol address
+		{
+			if(DEBUG == 1)
+				printf("%s: THIS REQUEST WAS FOR ME!\n", my_ifaces[i].name);
+
+			// So we answer !
+			char *reply = buildArpReply(my_ifaces[i].ipAddress, my_ifaces[i].macAddress, arp_spa, arp->arp_sha);
+			sendArpPacket(reply, iface);
+			free(reply);
+		}
+	}
+	else
+	{
+		if(type == ARP_REPLY)
+		{
+				if(DEBUG == 1)
+				{
+					printf("%s: ARP REPLY RECEIVED ", iface->name);
+					print_eth_address("FROM", arp->arp_sha);
+				}
+
+				if(arp_dpa == iface->ipAddress)
+				{
+					if(DEBUG == 1)
+						printf("%s: THIS REPLY WAS FOR ME!\n", iface->name);
+
+					// adds to list and wakes server thread
+					ArpNode *_newARPLine = newARPLine(arp_spa, arp->arp_sha, currentTTL, iface->name);
+					addARPLine(&arpTable, _newARPLine, DYNAMIC_ENTRY);
+
+					// Just some extra careful
+					if(waitingReply[iface->id] != 0)
+					{
+						sem_post(&xarpServerSemaphore);
+					}
+				}
+		}
+	}
+}
+
+ipPacketHandler(unsigned char *packet, int len, MyInterface *iface)
+{
+	// do nothing for know
+}
+
 // Break this function to implement the ARP functionalities.
 void doProcess(unsigned char* packet, int len, MyInterface *iface)
 {
@@ -96,72 +169,11 @@ void doProcess(unsigned char* packet, int len, MyInterface *iface)
 	struct ether_hdr* eth = (struct ether_hdr*) packet;
 	if(htons(0x0806) == eth->ether_type) // is a arp packet
 	{
-    struct arp_hdr *arp = (struct arp_hdr*) (packet + 14);
-		unsigned short type = ntohs(arp->arp_op);
-		unsigned int arp_dpa = * (unsigned int *) arp->arp_dpa;
-		unsigned int arp_spa = * (unsigned int *) arp->arp_spa;
-
-    if (type == ARP_REQUEST)
-    {
-			iface->rxPackets++;
-			iface->rxBytes += len;
-
-			// copy and paste code sorry. I'm in a hurry, but you don't have to worry
-			// searchs if some ie has the ip ip address requested
-			unsigned char i;
-			unsigned int ifaceIP;
-			unsigned char ifaceMAC[6];
-			for(i = 0; i < numIfaces; i++)
-			{
-				sem_wait(&my_ifaces[i].semaphore);
-				ifaceIP = my_ifaces[i].ipAddress;
-				// ifaceNetmask = my_ifaces[i].netMask;
-				memcpy(ifaceMAC, my_ifaces[i].macAddress, 6);
-				sem_post(&my_ifaces[i].semaphore);
-
-				if(ifaceIP == ntohl(arp_dpa)) break;
-			}
-
-			if(i < numIfaces) // there is an interface with the destination protocol address
-			{
-				if(DEBUG == 1)
-					printf("%s: THIS REQUEST WAS FOR ME!\n", my_ifaces[i].name);
-
-				// So we answer !
-				char *reply = buildArpReply(my_ifaces[i].ipAddress, my_ifaces[i].macAddress, ntohl(arp_spa), arp->arp_sha);
-				sendArpPacket(reply, iface);
-				free(reply);
-			}
-    }
-    else
-    {
-			if(type == ARP_REPLY)
-			{
-					if(DEBUG == 1)
-					{
-						printf("%s: ARP REPLY RECEIVED ", iface->name);
-						print_eth_address("FROM", arp->arp_sha);
-					}
-
-					if(ntohl(arp_dpa) == iface->ipAddress)
-					{
-						if(DEBUG == 1)
-							printf("%s: THIS REPLY WAS FOR ME!\n", iface->name);
-
-						// adds to list and wakes server thread
-						ArpNode *_newARPLine = newARPLine(ntohl(arp_spa), arp->arp_sha, currentTTL, iface->name);
-						addARPLine(&arpTable, _newARPLine, DYNAMIC_ENTRY);
-
-						// Just some extra careful
-						if(waitingReply[iface->id] != 0)
-						{
-							sem_post(&xarpServerSemaphore);
-						}
-					}
-			}
-    }
-		// ARP
-		//...
+		arpPacketHandler(packet+14, len-14, iface);
+	}
+	else if(htons(0x0800) == eth->ether_type)
+	{
+		ipPacketHandler(packet+14, len-14, iface);
 	}
 	// Ignore if it is not an ARP packet
 }

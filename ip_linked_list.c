@@ -25,7 +25,7 @@ char addLine(IPNode *table, IPNode *line)
 
   while(current != NULL && !found)
   {
-    if(inSameNetwork(current, line) && (line->netmask > current->netmask))
+    if((line->dstIP & line->netmask) > (current->dstIP & current->netmask))
     {
       // if the new line entry has a minor prefix lights up found flag
       found = 1;
@@ -49,22 +49,6 @@ char addLine(IPNode *table, IPNode *line)
   return __OK__;
 }
 
-char inSameNetwork(IPNode *a, IPNode *b)
-{
-  unsigned int n1, n2;
-  if(a->netmask < b->netmask)
-  {
-    n1 = a->dstIP & a->netmask;
-    n2 = b->dstIP & a->netmask;
-  }
-  else
-  {
-    n1 = a->dstIP & b->netmask;
-    n2 = b->dstIP & b->netmask;
-  }
-  printf("n1:%u n2:%u\n", n1, n2);
-  return n1 == n2;
-}
 
 char removeLine(IPNode *table, unsigned int dstIP, unsigned int gatewayIP, unsigned int netmask)
 {
@@ -108,7 +92,7 @@ IPNode* searchLine(IPNode *table, unsigned int dstIP, unsigned int gatewayIP, un
 
 void printLine(IPNode *line, unsigned int lineId)
 {
-  printf("%10d | ", lineId);
+  //printf("%10d | ", lineId);
 
   unsigned int fourBytes = line->dstIP;
   printf("%3u.%3u.%3u.%3u | ", (fourBytes & 0xFF000000)>>24, (fourBytes & 0x00FF0000) >> 16,
@@ -136,7 +120,7 @@ void printLine(IPNode *line, unsigned int lineId)
 
 void printTable(IPNode *table)
 {
-  printf("  Entrada  |   Endereço IP   | Endereço Ethernet | TTL\n");
+  printf("Destino\tGateway\tMáscara\tInterface\tTTL\n");
   IPNode *n = table->next;
 
   unsigned int i = 0;
@@ -148,7 +132,7 @@ void printTable(IPNode *table)
   }
 }
 
-IPNode* newLine(unsigned int dstIP, unsigned int gatewayIP, unsigned int mask, short int ttl, char *ifName)
+IPNode* newLine(unsigned int dstIP, unsigned int gatewayIP, unsigned int mask, short int ttl, char ifaceID, char *ifName)
 {
   IPNode *node = (IPNode*) malloc(sizeof(IPNode));
   node->dstIP = dstIP;
@@ -156,6 +140,7 @@ IPNode* newLine(unsigned int dstIP, unsigned int gatewayIP, unsigned int mask, s
   node->netmask = mask;
   node->ttl = ttl;
   if(ifName != NULL) strcpy(node->ifaceName, ifName);
+  node->ifaceID = ifaceID;
   node->next = NULL;
   sem_init(&(node->semaphore), 0, 1);
   return node;

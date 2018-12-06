@@ -25,7 +25,7 @@ void xroute_server_run(int newsockfd,
       sendRouteTable(newsockfd, routeTable);
       break;
     case ADD_ROUTE_LINE:
-      addLine(routeTable, newLine(target, gateway, netmask, -1, "ifaceName"));
+      addRoute(routeTable, ifaces, numIfaces, target, gateway, netmask);
       break;
     case DEL_ROUTE_LINE:
       removeLine(routeTable, target, gateway, netmask);
@@ -59,4 +59,36 @@ void routeLine2NetworkByteOrder(IPNode* line)
   line->gatewayIP = htonl(line->gatewayIP);
   line->netmask = htonl(line->netmask);
   line->ttl = htons(line->ttl);
+}
+
+void addRoute(IPNode* routeTable, MyInterface *ifaces, int numIfaces,
+              unsigned int target, unsigned int gateway, unsigned netmask)
+{
+  char index = getIfaceByPrefix(netmask, gateway, ifaces, numIfaces);
+  char *ifaceName;
+  ifaceName = (index != -1) ? ifaces[(unsigned char) index].name : "no_iface";
+  addLine(routeTable, newLine(target, gateway, netmask, -1, index, ifaceName));
+}
+
+char getIfaceByPrefix(unsigned int lineNetMask, unsigned int gateway, MyInterface* ifaces, int numIfaces)
+{
+  unsigned int linePrefix = lineNetMask & gateway;
+  unsigned int curretNetmask = 0;
+  unsigned char i;
+  char index;
+  index = -1;
+
+  for(i = 0; i < numIfaces; i++)
+  {
+    if(linePrefix == (ifaces[i].ipAddress & lineNetMask))
+    {
+      if(ifaces[i].netMask >= curretNetmask)
+      {
+        index = i;
+        curretNetmask =  ifaces[i].netMask;
+      }
+    }
+  }
+
+  return index;
 }
