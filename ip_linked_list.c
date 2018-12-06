@@ -25,7 +25,7 @@ char addLine(IPNode *table, IPNode *line)
 
   while(current != NULL && !found)
   {
-    if(inSameNetwork(current, line) && (line->netmask < current->netmask))
+    if(inSameNetwork(current, line) && (line->netmask > current->netmask))
     {
       // if the new line entry has a minor prefix lights up found flag
       found = 1;
