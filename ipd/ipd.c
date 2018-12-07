@@ -158,6 +158,12 @@ void arpPacketHandler(char *packet, int len, MyInterface *iface)
 void ipPacketHandler(unsigned char *packet, int len, MyInterface *iface)
 {
 	// do nothing for know
+	struct ip_hdr *packet = (struct ip_hdr*) packet;
+
+	if(packet->ip_v != 4) // dummy check
+		return;
+
+
 }
 
 // Break this function to implement the ARP functionalities.
