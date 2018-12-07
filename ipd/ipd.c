@@ -20,6 +20,7 @@
 #include "../arp_linked_list.h"
 #include "../ip_linked_list.h"
 #include "arp_protocol.h"
+#include "ip_protocol.h"
 #include "xifconfig_server.h"
 #include "xarp_server.h"
 #include "xroute_server.h"
@@ -159,6 +160,7 @@ void ipPacketHandler(unsigned char *packet, int len, MyInterface *iface)
 {
   struct ip_hdr * ipHeader = (struct ip_hdr*)packet;
   unsigned short checksum = ntohs(ipHeader->checksum);
+  ipHeader->checksum = 0;
   if validateChecksum((unsigned short *)packet, checksum)
   {
     if (isIpV4(ipHeader->ip_v))
