@@ -12,5 +12,5 @@ void xroute_server_run(int,
 void sendRouteTable(int, IPNode*);
 void routeLine2NetworkByteOrder(IPNode*);
 void addRoute(IPNode*, MyInterface*, int, unsigned int, unsigned int, unsigned);
-char getIfaceByPrefix(unsigned int, unsigned int, MyInterface*, int);
+char getIfaceByPrefix(unsigned int, MyInterface*, int);
 #endif

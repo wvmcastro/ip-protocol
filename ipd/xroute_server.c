@@ -64,15 +64,14 @@ void routeLine2NetworkByteOrder(IPNode* line)
 void addRoute(IPNode* routeTable, MyInterface *ifaces, int numIfaces,
               unsigned int target, unsigned int gateway, unsigned netmask)
 {
-  char index = getIfaceByPrefix(netmask, gateway, ifaces, numIfaces);
+  char index = getIfaceByPrefix(gateway, ifaces, numIfaces);
   char *ifaceName;
   ifaceName = (index != -1) ? ifaces[(unsigned char) index].name : "no_iface";
   addLine(routeTable, newLine(target, gateway, netmask, -1, index, ifaceName));
 }
 
-char getIfaceByPrefix(unsigned int lineNetMask, unsigned int gateway, MyInterface* ifaces, int numIfaces)
+char getIfaceByPrefix(unsigned int gateway, MyInterface* ifaces, int numIfaces)
 {
-  unsigned int linePrefix = lineNetMask & gateway;
   unsigned int curretNetmask = 0;
   unsigned char i;
   char index;
@@ -80,7 +79,7 @@ char getIfaceByPrefix(unsigned int lineNetMask, unsigned int gateway, MyInterfac
 
   for(i = 0; i < numIfaces; i++)
   {
-    if(linePrefix == (ifaces[i].ipAddress & lineNetMask))
+    if((gateway & ifaces[i].netMask) == (ifaces[i].ipAddress & ifaces[i].netMask))
     {
       if(ifaces[i].netMask >= curretNetmask)
       {
