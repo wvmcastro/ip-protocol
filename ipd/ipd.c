@@ -155,7 +155,7 @@ void arpPacketHandler(char *packet, int len, MyInterface *iface)
 	}
 }
 
-ipPacketHandler(unsigned char *packet, int len, MyInterface *iface)
+void ipPacketHandler(unsigned char *packet, int len, MyInterface *iface)
 {
 	// do nothing for know
 }
