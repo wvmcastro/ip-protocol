@@ -61,6 +61,9 @@ char showRouteTable()
   unsigned char IPNodeLen = sizeof(IPNode);
   char *buffer = (char*) malloc(IPNodeLen);
   IPNode* line;
+
+  printf("    Destino     |     Gateway     |     Máscara     | Interface | TTL\n");
+
   do
   {
     if(n == IPNodeLen)

@@ -2,6 +2,7 @@
 #include "../definitions.h"
 #include "protocol_headers.h"
 #include "../communication.h"
+#include "ethernet_protocol.h"
 
 #include <stdlib.h>
 #include <string.h> // memset
@@ -32,21 +33,16 @@ char *buildArpPacket(unsigned int myIP, unsigned char *myMAC,
   arpHeaderLen = sizeof(struct arp_hdr);
   ethHeaderLen = sizeof(struct ether_hdr);
 
+
   char *packet = (char*) malloc(arpHeaderLen + ethHeaderLen);
+  unsigned char dhost[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+  if(type != ARP_REQUEST)
+  {
+    memcpy(dhost, dstMAC, 6); // broadcast mac address
+  }
 
   struct ether_hdr *eth = (struct ether_hdr*) packet;
-
-  if(type == ARP_REQUEST)
-  {
-    memset(eth->ether_dhost, 0xFF, 6); // broadcast mac address
-  }
-  else
-  {
-    memcpy(eth->ether_dhost, dstMAC, 6); // broadcast mac address
-  }
-
-  memcpy(eth->ether_shost, myMAC, 6);
-  eth->ether_type = htons(ARP_ETHERTYPE);
+  fillEthernetHeader(eth, dhost, myMAC, ARP_ETHERTYPE);
 
   struct arp_hdr *arp_req = (struct arp_hdr*) (packet+ethHeaderLen);
   arp_req->arp_hd = htons(ARP_HW_TYPE);
