@@ -14,7 +14,7 @@
 #include <net/ethernet.h>
 
 // this function decrements the ttl of an ip header
-
+//potentially will not be used
 struct ip_hdr createIpHeader(unsigned char ip_hdl,
                              unsigned char ip_v,
                              unsigned char ip_tos,
@@ -83,28 +83,4 @@ unsigned char validateChecksum(unsigned short * buff, unsigned short receivedChe
 unsigned char isIpV4(unsigned char ip_v)
 {
   return ip_v == 4;
-}
-
-void handleIpPacket(char* buffer)
-{
-  struct ip_hdr * ipHeader = (struct ip_hdr*)buffer;
-  unsigned short checksum = ntohs(ipHeader->checksum);
-  ipHeader->checksum = 0;
-  if validateChecksum((unsigned short *)buffer, checksum)
-  {
-    if (isIpV4(ipHeader->ip_v))
-    {
-      if (decrementTTL(buffer))
-      {
-        checksum = computeChecksum((unsigned short *)buffer);
-        ipHeader->checksum = htons(checksum);
-
-        //verify the table to see the
-      }
-      else
-      {
-        //generate icmp time exceeded
-      }
-    }
-  }
 }

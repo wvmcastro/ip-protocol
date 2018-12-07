@@ -157,7 +157,25 @@ void arpPacketHandler(char *packet, int len, MyInterface *iface)
 
 void ipPacketHandler(unsigned char *packet, int len, MyInterface *iface)
 {
-	// do nothing for know
+  struct ip_hdr * ipHeader = (struct ip_hdr*)packet;
+  unsigned short checksum = ntohs(ipHeader->checksum);
+  if validateChecksum((unsigned short *)packet, checksum)
+  {
+    if (isIpV4(ipHeader->ip_v))
+    {
+      if (decrementTTL(packet))
+      {
+        checksum = computeChecksum((unsigned short *)packet);
+        ipHeader->checksum = htons(checksum);
+
+
+      }
+      else
+      {
+        //generate icmp time exceeded
+      }
+    }
+  }
 }
 
 // Break this function to implement the ARP functionalities.
@@ -175,7 +193,7 @@ void doProcess(unsigned char* packet, int len, MyInterface *iface)
 	{
 		ipPacketHandler(packet+14, len-14, iface);
 	}
-	// Ignore if it is not an ARP packet
+	// Ignore if it is not an ARP or IP packet
 }
 
 
