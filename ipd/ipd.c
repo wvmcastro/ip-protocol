@@ -20,6 +20,7 @@
 #include "../arp_linked_list.h"
 #include "../ip_linked_list.h"
 #include "arp_protocol.h"
+#include "ip_protocol.h"
 #include "xifconfig_server.h"
 #include "xarp_server.h"
 #include "xroute_server.h"
@@ -181,7 +182,7 @@ void doProcess(unsigned char* packet, int len, MyInterface *iface)
 	{
 		ipPacketHandler(packet+14, len-14, iface);
 	}
-	// Ignore if it is not an ARP packet
+	// Ignore if it is not an ARP or IP packet
 }
 
 
