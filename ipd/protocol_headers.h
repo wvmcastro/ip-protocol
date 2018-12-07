@@ -44,4 +44,13 @@ struct ip_hdr
 	unsigned int	ip_dst;		// Destination IP address
 };
 
+struct icmp_hdr
+{
+	unsigned char icmp_type;
+	unsigned char icmp_code;
+	unsigned short icmp_csum; // checksum
+	unsigned short icmp_id; // identifier
+	unsigned short icmp_seqnum; // sequence number
+};
+
 #endif

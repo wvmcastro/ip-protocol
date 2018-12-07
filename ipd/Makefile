@@ -28,5 +28,11 @@ communication.o: ../communication.c ../communication.h
 ethernet_protocol.o: ethernet_protocol.h ethernet_protocol.c
 	gcc -c ethernet_protocol.c
 
+icmp_protocol.o: icmp_protocol.h icmp_protocol.c protocol_headers.o common.o
+	gcc -c -Wall -pedantic -std=c99 icmp_protocol.c
+
+common.o: common.h common.c
+	gcc -c -Wall -pedantic -std=c99 common.c
+
 clean:
 	rm *.o ipd
