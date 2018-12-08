@@ -161,10 +161,39 @@ void ipPacketHandler(unsigned char *packet, int len, MyInterface *iface)
 	// do nothing for know
 	struct ip_hdr *packet = (struct ip_hdr*) packet;
 
-	if(packet->ip_v != 4) // dummy check
+	// checking the checksum
+	if(!validateIPChecksum(packet))
 		return;
 
+	if(packet->ip_v != 4) // check if it is an ipv4 packet
+		return;
 
+	if(--(packet->ip_ttl) == 0)
+	{
+
+		// generates an icmp tle message
+	}
+	else
+	{
+		// checks if the packet is intended for this node
+		if(ntohl(packet->ip_dst) == iface->ipAddress)
+		{
+			// checks if is an icmp message of type echo request
+			if(packet->ip_proto != ICMP_PROTOCOL)
+				return; // returns otherwise
+
+			struct icmp_hdr *icmpPacket = (struct icmp_hdr*) (packet + packet->ip_ihl * 4);
+
+			if(icmpPacket->icmp_type == ICMP_ECHO_REQUEST) // if is an echo request lets reply!
+			{
+				// oiee
+			}
+		}
+		else
+		{
+			// the packet is not for me, so just forward it
+		}
+	}
 }
 
 // Break this function to implement the ARP functionalities.

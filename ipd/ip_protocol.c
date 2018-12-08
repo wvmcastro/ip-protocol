@@ -2,12 +2,13 @@
 #include "../definitions.h"
 #include "protocol_headers.h"
 #include "../communication.h"
+#include "common.h"
 
 #include <stdlib.h>
 #include <string.h> // memset
 #include <net/if.h> // if_nametoindex
 #include <unistd.h> // close function
-#include <arpa/inet.h>
+#include <arpa/inet.h> // ntoh hton
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <linux/if_packet.h>
@@ -55,7 +56,7 @@ unsigned char decrementTTL(char* buffer)
   }
 }
 
-unsigned short computeChecksum(unsigned short * buffer)
+/*unsigned short computeChecksum(unsigned short * buffer)
 {
   unsigned short * aux = buffer;
   struct ip_hdr ipHeader = (struct ip_hdr)aux;
@@ -72,12 +73,15 @@ unsigned short computeChecksum(unsigned short * buffer)
     }
   }
   return ~(sum & 0xFFFF);
-}
+}*/
 
-unsigned char validateChecksum(unsigned short * buff, unsigned short receivedChecksum)
+unsigned char validateIPChecksum(struct ip_hdr *packet)
 {
-  unsigned short computedChecksum = computeChecksum(buff);
-  return (computeChecksum == receivedChecksum);
+  unsigned short len = packet->ip_ihl * 2; // len in 16bits words
+  unsigned short receivedChecksum = packet->ip_csum;
+  unsigned short computedChecksum = computeChecksum((unsigned short*) packet, len);
+
+  return computedChecksum == ntohs(receivedChecksum);
 }
 
 unsigned char isIpV4(unsigned char ip_v)

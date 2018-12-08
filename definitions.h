@@ -24,6 +24,13 @@
 #define STATIC_ENTRY  1
 // --------- End types of arp table entries ----------
 
+// ------------------ IP protocol --------------------
+#define ICMP_PROTOCOL 0x01
+// ---------------- End IP protocol ------------------
+
+// -------------- ICMP Protocol ----------------------
+#define ICMP_ECHO_REQUEST 0x08
+// ------------- End ICMP Protocol -------------------
 
 // ------------------ ARP protocol -------------------
 #define ARP_ETHERTYPE     0x0806
