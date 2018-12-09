@@ -29,7 +29,7 @@ struct ip_hdr createIpHeader(unsigned char ip_hdl,
                              unsigned int ip_dst)
 {
   struct ip_hdr ipHeader;
-  ipHeader.ip_hdl = ip_hdl;
+  ipHeader.ip_ihl = ip_hdl;
   ipHeader.ip_v = ip_v;
   ipHeader.ip_tos = ip_tos;
   ipHeader.ip_len = ip_len;

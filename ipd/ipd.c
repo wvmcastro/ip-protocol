@@ -156,10 +156,10 @@ void arpPacketHandler(char *packet, int len, MyInterface *iface)
 	}
 }
 
-void ipPacketHandler(unsigned char *packet, int len, MyInterface *iface)
+void ipPacketHandler(unsigned char *_packet, int len, MyInterface *iface)
 {
 	// do nothing for know
-	struct ip_hdr *packet = (struct ip_hdr*) packet;
+	struct ip_hdr *packet = (struct ip_hdr*) _packet;
 
 	// checking the checksum
 	if(!validateIPChecksum(packet))
