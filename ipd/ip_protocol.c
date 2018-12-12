@@ -42,38 +42,6 @@ struct ip_hdr createIpHeader(unsigned char ip_hdl,
 
   return ipHeader;
 }
-unsigned char decrementTTL(char* buffer)
-{
-  struct ip_hdr* ipHeader = (struct ip_hdr*)buffer;
-  ipHeader->ip_ttl -= 1;
-  if(ipHeader->ip_ttl == 0)
-  {
-    return 0;
-  }
-  else
-  {
-    return 1;
-  }
-}
-
-/*unsigned short computeChecksum(unsigned short * buffer)
-{
-  unsigned short * aux = buffer;
-  struct ip_hdr ipHeader = (struct ip_hdr)aux;
-  unsigned long sum = 0;
-  int cont = 0;
-  cont = ipHeader.ihl * 2;
-  while(cont--)
-  {
-    sum += *aux++;
-    if (sum & 0xFFFF0000)
-    {
-      sum &= 0xFFFF;
-      sum++;
-    }
-  }
-  return ~(sum & 0xFFFF);
-}*/
 
 unsigned char validateIPChecksum(struct ip_hdr *packet)
 {
@@ -81,7 +49,21 @@ unsigned char validateIPChecksum(struct ip_hdr *packet)
   unsigned short receivedChecksum = packet->ip_csum;
   unsigned short computedChecksum = computeChecksum((unsigned short*) packet, len);
 
-  return computedChecksum == ntohs(receivedChecksum);
+  return computedChecksum == receivedChecksum;
+}
+
+unsigned char updateTTLandChecksum(struct ip_hdr *packet)
+{
+  // This function is higly inpired in RFC1141
+  unsigned short oldTTL = ntohs(packet->ip_ttl);
+  if(--(packet->ip_ttl))
+  {
+    unsigned long int sum = oldTTL + (~ntohl(packet->ip_ttl) & 0xffff);
+    sum += ntohs(packet->ip_csum);
+    sum = (sum & 0xffff) + (sun >> 16);
+    packet->ip_csum = htons(sum + (sum >> 16));
+  }
+  return packet->ip_ttl;
 }
 
 unsigned char isIpV4(unsigned char ip_v)

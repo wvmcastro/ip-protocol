@@ -15,7 +15,8 @@ struct ip_hdr createIpHeader(unsigned char,
                              unsigned int,
                              unsigned int);
 unsigned char decrementTTL(char*);
-// unsigned short computeChecksum(unsigned short *);
 unsigned char validateIPChecksum(struct ip_hdr*);
 unsigned char isIpV4(unsigned char);
+unsigned char updateTTLandChecksum(struct ip_hdr*);
+
 #endif
