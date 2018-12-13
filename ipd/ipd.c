@@ -24,6 +24,8 @@
 #include "xifconfig_server.h"
 #include "xarp_server.h"
 #include "xroute_server.h"
+#include "common.h"
+#include "ethernet_protocol.h"
 
 #define MAX_PACKET_SIZE 65536
 #define MIN_PACKET_SIZE 20
@@ -123,7 +125,7 @@ void arpPacketHandler(char *packet, int len, MyInterface *iface)
 
 			// So we answer !
 			char *reply = buildArpReply(my_ifaces[i].ipAddress, my_ifaces[i].macAddress, arp_spa, arp->arp_sha);
-			sendArpPacket(reply, iface);
+			sendEthPacket(reply, iface);
 			free(reply);
 		}
 	}
@@ -191,7 +193,36 @@ void ipPacketHandler(unsigned char *_packet, int len, MyInterface *iface)
 		}
 		else
 		{
-			// the packet is not for me, so just forward it
+      updateTTLandChecksum(packet);
+      IPNode *node = searchLineWithMask(&routeTable, packet->ip_dst);
+      if (node != NULL)
+      {
+        //ArpNode* searchARPLine(ArpNode *table, unsigned int ipAddress)
+        ArpNode* arpNode = searchARPLine(&arpTable, (node->next)->dstIP);
+        if (arpNode == NULL)
+        {
+          unsigned char dhost[6];
+          strcpy(dhost, (arpNode->next)->macAddress); // get the destination host mac address
+          int ethHeaderLen = sizeof(struct ether_hdr); // the size of the ethernet header
+
+          char *ethPacket = (char*) malloc(ethHeaderLen + len);// o tamanho do cabecalho mais o tamanho do pacote que chegou
+
+          struct ether_hdr *eth = (struct ether_hdr*) ethPacket;
+          char myMAC[6];
+          strcpy(myMAC, (const char*)iface->macAddress);
+
+          fillEthernetHeader(eth, dhost, myMAC, ARP_PROTOTYPE);
+          memcpy(ethPacket+ethHeaderLen, packet, len);
+          sendEthPacket(ethPacket, iface);
+        }
+        else
+        {
+          //aqui vai o código legal que vai ser bem difícil de fazer
+        }
+
+      }
+
+
 		}
 	}
 }

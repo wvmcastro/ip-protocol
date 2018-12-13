@@ -28,6 +28,7 @@ IPNode* newLine(unsigned int, unsigned int, unsigned int, short int, char, char*
 // of the node who has the requested target and gateway ipAddress and netmask
 // if Null means that there is no node with the exact three numbers
 IPNode* searchLine(IPNode*, unsigned int, unsigned int, unsigned int);
+IPNode* searchLineWithMask(IPNode *, unsigned int );
 
 
 void printLine(IPNode*, unsigned int);

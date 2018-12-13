@@ -70,6 +70,23 @@ char removeLine(IPNode *table, unsigned int dstIP, unsigned int gatewayIP, unsig
   return __ERROR__;
 }
 
+IPNode* searchLineWithMask(IPNode *table, unsigned int ipDest)
+{
+  sem_wait(&(table->semaphore));
+  IPNode *n = table;
+  while(n->next != NULL)
+  {
+    if( ipDest & (n->next)->netmask == (n->next)->dstIP)
+    {
+      sem_post(&(table->semaphore));
+      return n;
+    }
+    n = n->next;
+  }
+  sem_post(&(table->semaphore));
+  return NULL;
+}
+
 // always returns the previous node to the desired node
 IPNode* searchLine(IPNode *table, unsigned int dstIP, unsigned int gatewayIP, unsigned int netmask)
 {

@@ -12,6 +12,7 @@
 #include "../communication.h"
 #include "../my_interface.h"
 #include "arp_protocol.h"
+#include "common.h"
 
 #define DEBUG 1
 
@@ -111,7 +112,7 @@ void resolveIP(unsigned int ip, ArpNode *arpTable,
 			waitingReply[i] = 1;
 
 			char *request = buildArpRequest(ifaceIP, ifaceMAC, ip);
-			sendArpPacket(request, &ifaces[i]);
+			sendEthPacket(request, &ifaces[i]);
 			free(request);
 
 			if(DEBUG == 1)
