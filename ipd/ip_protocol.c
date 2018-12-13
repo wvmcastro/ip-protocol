@@ -4,6 +4,7 @@
 #include "../communication.h"
 #include "common.h"
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h> // memset
 #include <net/if.h> // if_nametoindex
@@ -47,8 +48,8 @@ unsigned char validateIPChecksum(struct ip_hdr *packet)
 {
   unsigned short len = packet->ip_ihl * 2; // len in 16bits words
   unsigned short receivedChecksum = packet->ip_csum;
+  packet->ip_csum = 0;
   unsigned short computedChecksum = computeChecksum((unsigned short*) packet, len);
-
   return computedChecksum == receivedChecksum;
 }
 
@@ -60,7 +61,7 @@ unsigned char updateTTLandChecksum(struct ip_hdr *packet)
   {
     unsigned long int sum = oldTTL + (~ntohl(packet->ip_ttl) & 0xffff);
     sum += ntohs(packet->ip_csum);
-    sum = (sum & 0xffff) + (sun >> 16);
+    sum = (sum & 0xffff) + (sum >> 16);
     packet->ip_csum = htons(sum + (sum >> 16));
   }
   return packet->ip_ttl;
