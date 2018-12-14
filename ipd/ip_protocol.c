@@ -50,6 +50,7 @@ unsigned char validateIPChecksum(struct ip_hdr *packet)
   unsigned short receivedChecksum = packet->ip_csum;
   packet->ip_csum = 0;
   unsigned short computedChecksum = computeChecksum((unsigned short*) packet, len);
+  packet->ip_csum = computedChecksum;
   return computedChecksum == receivedChecksum;
 }
 

@@ -193,14 +193,16 @@ void ipPacketHandler(unsigned char *_packet, int len, MyInterface *iface)
 		}
 		else
 		{
-      updateTTLandChecksum(packet);
-      IPNode *node = searchLineWithMask(&routeTable, packet->ip_dst);
+      // unsigned char oi = updateTTLandChecksum(packet);
+      //verificar se o ttl eh zero
+      IPNode *node = searchLineWithMask(&routeTable, ntohl(packet->ip_dst));
       if (node != NULL)
       {
         //ArpNode* searchARPLine(ArpNode *table, unsigned int ipAddress)
-        ArpNode* arpNode = searchARPLine(&arpTable, (node->next)->dstIP);
-        if (arpNode == NULL)
+        ArpNode* arpNode = searchARPLine(&arpTable, (node->next)->gatewayIP);
+        if (arpNode != NULL)
         {
+          printf("RUTIEI\n");
           unsigned char dhost[6];
           strcpy(dhost, (arpNode->next)->macAddress); // get the destination host mac address
           int ethHeaderLen = sizeof(struct ether_hdr); // the size of the ethernet header
@@ -217,11 +219,15 @@ void ipPacketHandler(unsigned char *_packet, int len, MyInterface *iface)
         }
         else
         {
+          printf("arp eh nulo\n");
           //aqui vai o código legal que vai ser bem difícil de fazer
         }
 
       }
-
+      // else
+      // {
+      //   printf("A busca retornou nulo para o endereço ip");
+      // }
 
 		}
 	}

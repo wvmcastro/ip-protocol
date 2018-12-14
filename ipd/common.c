@@ -63,3 +63,10 @@ int sendEthPacket(char *packet, MyInterface *iface)
 
   return __OK__;
 }
+
+/*
+colocar 3 hosts abc
+configurar o b como roteador
+de A tentar pingar em C
+
+*/
