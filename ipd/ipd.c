@@ -125,7 +125,7 @@ void arpPacketHandler(char *packet, int len, MyInterface *iface)
 
 			// So we answer !
 			char *reply = buildArpReply(my_ifaces[i].ipAddress, my_ifaces[i].macAddress, arp_spa, arp->arp_sha);
-			sendEthPacket(reply, iface);
+			sendEthPacket(reply, iface,  sizeof(struct arp_hdr) + sizeof(struct ether_hdr));
 			free(reply);
 		}
 	}
@@ -168,16 +168,13 @@ void ipPacketHandler(unsigned char *_packet, int len, MyInterface *iface)
   {
     printf("erro no checksum %s\n",iface->name);
     return;
-
   }
 
 	if(packet->ip_v != 4) // check if it is an ipv4 packet
-  {
-    printf("a versao do ip n eh 4\n");
     return;
 
-  }
   unsigned char aux = packet->ip_ttl - 1;
+
 	if(aux == 0)
 	{
     printf("o ttl esta zerado\n");
@@ -206,40 +203,35 @@ void ipPacketHandler(unsigned char *_packet, int len, MyInterface *iface)
       // unsigned char oi = updateTTLandChecksum(packet);
       //verificar se o ttl eh zero
       IPNode *node = searchLineWithMask(&routeTable, ntohl(packet->ip_dst));
+			printf("");
       if (node != NULL)
       {
-        //ArpNode* searchARPLine(ArpNode *table, unsigned int ipAddress)
         ArpNode* arpNode = searchARPLine(&arpTable, (node->next)->gatewayIP);
         if (arpNode != NULL)
         {
           unsigned char dhost[6];
-          strcpy(dhost, (arpNode->next)->macAddress); // get the destination host mac address
+          memcpy(dhost, (arpNode->next)->macAddress, 6); // get the destination host mac address
           int ethHeaderLen = sizeof(struct ether_hdr); // the size of the ethernet header
 
           char *ethPacket = (char*) malloc(ethHeaderLen + len);// o tamanho do cabecalho mais o tamanho do pacote que chegou
 
           struct ether_hdr *eth = (struct ether_hdr*) ethPacket;
-          char myMAC[6];
-          strcpy(myMAC, (const char*)iface->macAddress);
+          unsigned char myMAC[6];
+          memcpy(myMAC, (const char*) (my_ifaces[(node->next)->ifaceID].macAddress), 6);
 
-          fillEthernetHeader(eth, dhost, myMAC, ARP_PROTOTYPE);
+          fillEthernetHeader(eth, dhost, myMAC, 0x0800);
           memcpy(ethPacket+ethHeaderLen, packet, len);
-          printf("iface: %u\n", (node->next)->ifaceID);
-          sendEthPacket(ethPacket, &my_ifaces[(node->next)->ifaceID]);
-          printf("RUTIEI\n");
+          sendEthPacket(ethPacket, &my_ifaces[(node->next)->ifaceID], sizeof(struct ether_hdr)+len);
+					// printf("recebifo por %s:", )
+					// printf("enviado por %s:", my_ifaces[(node->next)->ifaceID].name);
+					free(ethPacket);
         }
         else
         {
-          printf("arp eh nulo\n");
           //aqui vai o código legal que vai ser bem difícil de fazer
         }
 
       }
-      // else
-      // {
-      //   printf("A busca retornou nulo para o endereço ip");
-      // }
-
 		}
 	}
 }

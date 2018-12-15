@@ -73,6 +73,7 @@ char removeLine(IPNode *table, unsigned int dstIP, unsigned int gatewayIP, unsig
 IPNode* searchLineWithMask(IPNode *table, unsigned int ipDest)
 {
   sem_wait(&(table->semaphore));
+
   if(table == NULL){
     printf("tabela nula\n");
   };
@@ -81,18 +82,16 @@ IPNode* searchLineWithMask(IPNode *table, unsigned int ipDest)
   {
     printf("tabela->next nula\n");
   }
+
   while(n->next != NULL)
   {
     // printf("IP dst pacote: %x, Mascara: %x, AND: %x, IP dts tabela: %x\n", ipDest, (unsigned int)(n->next)->netmask,ipDest & ((n->next)->netmask), (unsigned int)((n->next)->dstIP));
 
     if( (ipDest & ((n->next)->netmask)) == (n->next)->dstIP)
     {
-      printf("AND: %x = %x :RES\n",ipDest & ((n->next)->netmask), (n->next)->dstIP);
-      printf("gatewayIP: %x\n",(n->next)->gatewayIP);
       sem_post(&(table->semaphore));
       return n;
     }
-    printf("AND: %x != %x :RES\n",ipDest & ((n->next)->netmask), (n->next)->dstIP);
     n = n->next;
   }
   sem_post(&(table->semaphore));

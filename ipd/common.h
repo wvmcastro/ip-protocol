@@ -3,6 +3,6 @@
 
 #include "../my_interface.h"
 unsigned short computeChecksum(unsigned short*, unsigned short);
-int sendEthPacket(char*, MyInterface*);
+int sendEthPacket(char*, MyInterface*, unsigned int);
 
 #endif

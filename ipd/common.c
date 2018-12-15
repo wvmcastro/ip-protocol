@@ -29,7 +29,7 @@ unsigned short computeChecksum(unsigned short *buffer, unsigned short size)
   return ~(sum & 0xFFFF);
 }
 
-int sendEthPacket(char *packet, MyInterface *iface)
+int sendEthPacket(char *packet, MyInterface *iface, unsigned int frameSize)
 {
   struct sockaddr_ll device;
   memset(&device, 0, sizeof(struct sockaddr_ll)); // just for safety
@@ -49,7 +49,7 @@ int sendEthPacket(char *packet, MyInterface *iface)
   int socket = _socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
 
   // Sends the packet
-  unsigned int packetLen = sizeof(struct arp_hdr) + sizeof(struct ether_hdr);
+  unsigned int packetLen = frameSize;
   int bytes = sendto(socket, packet, packetLen, 0, (struct sockaddr*) &device, sizeof(struct sockaddr_ll));
   close(socket);
 

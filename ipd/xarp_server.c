@@ -5,6 +5,7 @@
 #include <time.h> // used to build the timeout argument for sem_timedwait
 #include <semaphore.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include "xarp_server.h"
 
@@ -12,6 +13,7 @@
 #include "../communication.h"
 #include "../my_interface.h"
 #include "arp_protocol.h"
+#include "protocol_headers.h"
 #include "common.h"
 
 #define DEBUG 1
@@ -112,7 +114,7 @@ void resolveIP(unsigned int ip, ArpNode *arpTable,
 			waitingReply[i] = 1;
 
 			char *request = buildArpRequest(ifaceIP, ifaceMAC, ip);
-			sendEthPacket(request, &ifaces[i]);
+			sendEthPacket(request, &ifaces[i],  sizeof(struct arp_hdr) + sizeof(struct ether_hdr));
 			free(request);
 
 			if(DEBUG == 1)
