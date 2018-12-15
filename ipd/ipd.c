@@ -165,14 +165,22 @@ void ipPacketHandler(unsigned char *_packet, int len, MyInterface *iface)
 
 	// checking the checksum
 	if(!validateIPChecksum(packet))
-		return;
+  {
+    printf("erro no checksum %s\n",iface->name);
+    return;
+
+  }
 
 	if(packet->ip_v != 4) // check if it is an ipv4 packet
-		return;
+  {
+    printf("a versao do ip n eh 4\n");
+    return;
 
-	if(--(packet->ip_ttl) == 0)
+  }
+  unsigned char aux = packet->ip_ttl - 1;
+	if(aux == 0)
 	{
-
+    printf("o ttl esta zerado\n");
 		// generates an icmp tle message
 	}
 	else
@@ -180,6 +188,7 @@ void ipPacketHandler(unsigned char *_packet, int len, MyInterface *iface)
 		// checks if the packet is intended for this node
 		if(ntohl(packet->ip_dst) == iface->ipAddress)
 		{
+      printf("eh necessario sempre acreditar que o sonho eh possivel, que o ceu eh o limite e vc truta eh imbativel\n");
 			// checks if is an icmp message of type echo request
 			if(packet->ip_proto != ICMP_PROTOCOL)
 				return; // returns otherwise
@@ -189,6 +198,7 @@ void ipPacketHandler(unsigned char *_packet, int len, MyInterface *iface)
 			if(icmpPacket->icmp_type == ICMP_ECHO_REQUEST) // if is an echo request lets reply!
 			{
 				// oiee
+
 			}
 		}
 		else
@@ -202,7 +212,6 @@ void ipPacketHandler(unsigned char *_packet, int len, MyInterface *iface)
         ArpNode* arpNode = searchARPLine(&arpTable, (node->next)->gatewayIP);
         if (arpNode != NULL)
         {
-          printf("RUTIEI\n");
           unsigned char dhost[6];
           strcpy(dhost, (arpNode->next)->macAddress); // get the destination host mac address
           int ethHeaderLen = sizeof(struct ether_hdr); // the size of the ethernet header
@@ -215,7 +224,9 @@ void ipPacketHandler(unsigned char *_packet, int len, MyInterface *iface)
 
           fillEthernetHeader(eth, dhost, myMAC, ARP_PROTOTYPE);
           memcpy(ethPacket+ethHeaderLen, packet, len);
-          sendEthPacket(ethPacket, iface);
+          printf("iface: %u\n", (node->next)->ifaceID);
+          sendEthPacket(ethPacket, &my_ifaces[(node->next)->ifaceID]);
+          printf("RUTIEI\n");
         }
         else
         {

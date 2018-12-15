@@ -46,17 +46,18 @@ struct ip_hdr createIpHeader(unsigned char ip_hdl,
 
 unsigned char validateIPChecksum(struct ip_hdr *packet)
 {
-  unsigned short len = packet->ip_ihl * 2; // len in 16bits words
+  unsigned short len = (packet->ip_ihl) * 2; // len in 16bits words
   unsigned short receivedChecksum = packet->ip_csum;
   packet->ip_csum = 0;
   unsigned short computedChecksum = computeChecksum((unsigned short*) packet, len);
   packet->ip_csum = computedChecksum;
+  printf("old:%u\nnew:%u\n",receivedChecksum, computedChecksum);
   return computedChecksum == receivedChecksum;
 }
 
 unsigned char updateTTLandChecksum(struct ip_hdr *packet)
 {
-  // This function is higly inpired in RFC1141
+  // This function is highly inspired in RFC1141
   unsigned short oldTTL = ntohs(packet->ip_ttl);
   if(--(packet->ip_ttl))
   {

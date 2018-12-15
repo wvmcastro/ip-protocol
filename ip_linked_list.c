@@ -88,6 +88,7 @@ IPNode* searchLineWithMask(IPNode *table, unsigned int ipDest)
     if( (ipDest & ((n->next)->netmask)) == (n->next)->dstIP)
     {
       printf("AND: %x = %x :RES\n",ipDest & ((n->next)->netmask), (n->next)->dstIP);
+      printf("gatewayIP: %x\n",(n->next)->gatewayIP);
       sem_post(&(table->semaphore));
       return n;
     }
